@@ -1,1 +1,1 @@
-# spbu-se2020-autumn_tests
+# spbu-se2020-autumntests
