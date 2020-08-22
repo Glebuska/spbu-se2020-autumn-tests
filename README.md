@@ -1,6 +1,6 @@
-# spbu-se2020-autumntests
+# spbu-se2020-autumn-tests
 
-To run cmocka:
-1)install cmocka framework
-2)clone repo
-3) cd cmocka_test -> mkdir build -> cd build -> cmake ../ -> make -> ./program
+**To run cmocka:**
+  1. install cmocka framework
+  2. clone repo
+  3. cd cmocka_test -> mkdir build -> cd build -> cmake ../ -> make -> ./program
