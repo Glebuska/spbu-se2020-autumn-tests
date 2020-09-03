@@ -14,11 +14,9 @@ find_library(CMOCKA_LIBRARY libcmocka.so.0)
 set_source_files_properties(main.c
         PROPERTIES
         COMPILE_DEFINITIONS
-        UNIT_TESTING=1)
+        UNIT_TESTING)
 
-
-### Calulator test
-add_executable(program main_test main.c sort.s sort.h)
+add_executable(program main_test.c main.c sort.s sort.h config.h)
 
 add_test(calculator_test calculator_test)
 
