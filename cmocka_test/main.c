@@ -104,6 +104,11 @@ int main(int argc, char *argv[]) {
     if (argc == 1){
         return -1;
     }
+
+    if (argc > 3){
+        return -2;
+    }
+
     for (int i = 1; i < argc; ++i)
         strcat(argv_concat, argv[i]);
     parse(argv_concat);
