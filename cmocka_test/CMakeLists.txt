@@ -1,22 +1,18 @@
-cmake_minimum_required(VERSION 3.16.3)
-project(tests)
+cmake_minimum_required(VERSION 3.7)
+project(tests LANGUAGES C ASM)
 
 set(CMAKE_C_STANDARD 99)
 
-set_property(SOURCE sort.s PROPERTY LANGUAGE C)
+add_subdirectory(src)
 
-#configure_file(test_1.txt
-#        ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
-include_directories(/usr/local/include)
-find_library(CMOCKA_LIBRARY libcmocka.so.0)
-
-set_source_files_properties(main.c
-        PROPERTIES
-        COMPILE_DEFINITIONS
-        UNIT_TESTING)
-#add_executable(program main.c sort.s sort.h)
-
-add_executable(test main_test.c main.c sort.s sort.h)
-
-target_link_libraries(test ${CMOCKA_LIBRARY})
+# cmocka
+option(ENABLE_TESTS "Perform unit tests after build" ON)
+if (ENABLE_TESTS)
+    find_package(CMocka CONFIG REQUIRED)
+    include(AddCMockaTest)
+    include(AddMockedTest)
+    add_subdirectory(test)
+    enable_testing()
+endif(ENABLE_TESTS)
