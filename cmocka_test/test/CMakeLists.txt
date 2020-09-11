@@ -1,0 +1,1 @@
+add_mocked_test(main SOURCES ${CMAKE_SOURCE_DIR}/src/sort.s ${CMAKE_SOURCE_DIR}/src/sort.h MOCKS printf scanf fprintf)
