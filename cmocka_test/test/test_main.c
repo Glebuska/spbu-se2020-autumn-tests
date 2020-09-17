@@ -12,13 +12,14 @@
 #define vsnprintf _vsnprintf
 #endif /* _WIN32 */
 
+#if defined(scanf) || defined(printf) || defined(fprintf)
+#error "Not handled yet: redefinition of stdio functions"
+#endif
+
+int __real_main();
+
 #define array_length(x) (sizeof(x) / sizeof((x)[0]))
 
-#define main __real_main
-#define scanf __real_scanf
-#include "main.c"
-#undef main
-#undef scanf
 //extern int example_main(int argc, char *argv[]);
 //
 //int example_test_fprintf(FILE* file, const char *format, ...) CMOCKA_PRINTF_ATTRIBUTE(2, 3);
@@ -81,7 +82,7 @@ int __wrap_printf(const char *format, ...) {
     return return_value;
 }
 
-void __real_scanf(const char *format, ...) {
+int __wrap_scanf(const char *format, ...) {
     va_list args;
     va_start(args, format);
     switch (num_of_test) {
@@ -94,12 +95,21 @@ void __real_scanf(const char *format, ...) {
         case 3: *va_arg(args, int*) = test_input3[idx++];
             if (array_length(test_input3) == idx) *va_arg(args, char*) = '\n';
             break;
-        default: return;
+        default: 
+            va_end(args);
+	     return -1;
     }
 
     va_end(args);
+    return 1; // TODO: Return proper count
 }
 
+
+int __wrap___isoc99_scanf(const char *restrict format, ...) {
+     void *args = __builtin_apply_args();
+     void *ret = __builtin_apply((void (*)())__wrap_scanf, args, 1000);
+     __builtin_return(ret);
+}
 
 static void test_example_main_no_args(void **state) {
     const char *args[] = {
@@ -134,7 +144,7 @@ static void test_main_1(void **state) {
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
     expect_string(__wrap_printf, temporary_buffer, "3");
 
-    assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+    assert_int_equal(__real_main(array_length(args), args), 0);
 }
 
 static void test_main_2(void **state){
@@ -169,7 +179,7 @@ static void test_main_2(void **state){
 //    assert_int_equal(example_main(array_length(args), (char **) args), 0);
 //}
 
-int main()
+int __wrap_main()
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(test_example_main_no_args),

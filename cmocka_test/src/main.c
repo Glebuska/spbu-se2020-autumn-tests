@@ -63,9 +63,8 @@ static void parse(char *str) {
 }
 
 int main(int argc, char *argv[]) {
-
     // Parsing argv
-    char argv_concat[1000];
+    char argv_concat[1000] = {0};
     // if no argument -> return -1
     if (argc == 1){
         return -1;
