@@ -28,9 +28,11 @@ int sort(int *arr, int size) {
 */
 
 int to = 0, from = 0;
-_Bool exist_to = 0, exist_from = 0;
+int exist_to = 0, exist_from = 0;
 
 static void parse(char *str) {
+    exist_to = 0;
+    exist_from = 0;
     int i = 0, cnt;
     char substr[4], number[1000];
     for ( ; i < strlen(str); ) {
@@ -40,7 +42,7 @@ static void parse(char *str) {
             memcpy(substr, str + i, 2 * sizeof(char));
         if (substr[0] == 'f' && substr[1] == 'r' && substr[2] == 'o' && substr[3] == 'm') {
             i += 5;
-            exist_from = 1;
+            exist_from++;
             cnt = 0;
             memset(number, ' ', 1000 * sizeof(char));
             for ( ; i < strlen(str) && '0' <= str[i] && str[i] <= '9'; ++i)
@@ -49,7 +51,7 @@ static void parse(char *str) {
         }
         else if (substr[0] == 't' && substr[1] == 'o') {
             i += 3;
-            exist_to = 1;
+            exist_to++;
             cnt = 0;
             memset(number, ' ', 1000 * sizeof(char));
             for ( ; i < strlen(str) && '0' <= str[i] && str[i] <= '9'; ++i)
@@ -66,7 +68,7 @@ int main(int argc, char *argv[]) {
     // Parsing argv
     char argv_concat[1000] = {0};
     // if no argument -> return -1
-    if (argc == 1){
+    if (argc < 2){
         return -1;
     }
 
@@ -78,25 +80,31 @@ int main(int argc, char *argv[]) {
         strcat(argv_concat, argv[i]);
     parse(argv_concat);
 
+    if(exist_from == 2 || exist_to == 2)
+        return -3;
+
     // Reading numbers
-    int arr[100], count = 0, arrSize = 0;
+    int arr[100];
+    int count = 0, arrSize = 0;
     int data[100];
     char space_symbol;
     space_symbol = ' ';
     while (space_symbol != '\n') {
         scanf("%d%c", &data[count], &space_symbol);
-        if (exist_from && data[count] <= from) {
-            fprintf(stdout, "%d ", data[count]);
-        }
-        else {
-            if (exist_to && data[count] >= to)
+        if (exist_from && data[count] <= from || exist_to && data[count] >= to) {
+            if (exist_from && data[count] <= from) {
+                fprintf(stdout, "%d ", data[count]);
+            }
+            if (exist_to && data[count] >= to) {
                 fprintf(stderr, "%d ", data[count]);
-            else
-                arr[arrSize++] = data[count];
-        }
+            }
+        } else arr[arrSize++] = data[count];
     }
-    int ans = sort(arr, arrSize);
-    printf("%d", ans);
+    int ans = 0;
+    if (arrSize != 0) {
+        ans = sort(arr, arrSize);
+    }
+    // printf("%d", ans);
 
-    return 0;
+    return ans;
 }

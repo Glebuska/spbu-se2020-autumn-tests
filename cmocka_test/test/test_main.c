@@ -31,7 +31,9 @@ static char temporary_buffer_stderr[256];
 static int num_of_test;
 static int test_input1[] = {2, 4, 1, 5, 8, 4};
 static int test_input2[] = {4, 7, 10, 5, 1, 6, 8};
-static int test_input3[] = {};
+static int test_input3[] = {5, 5, 5};
+static int test_input4[] = {5, 5, 5, 8, 1};
+static int test_input5[] = {-2, -1, 0, 1, 2};
 static int idx;
 
 /* A mock fprintf function that checks the value of strings printed to the
@@ -95,6 +97,12 @@ int __wrap_scanf(const char *format, ...) {
         case 3: *va_arg(args, int*) = test_input3[idx++];
             if (array_length(test_input3) == idx) *va_arg(args, char*) = '\n';
             break;
+        case 4: *va_arg(args, int*) = test_input4[idx++];
+            if (array_length(test_input4) == idx) *va_arg(args, char*) = '\n';
+            break;
+        case 5: *va_arg(args, int*) = test_input5[idx++];
+            if (array_length(test_input5) == idx) *va_arg(args, char*) = '\n';
+            break;
         default: 
             va_end(args);
 	     return -1;
@@ -142,9 +150,9 @@ static void test_main_1(void **state) {
 
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
-    expect_string(__wrap_printf, temporary_buffer, "3");
+    //expect_string(__wrap_printf, temporary_buffer, "3");
 
-    assert_int_equal(__real_main(array_length(args), args), 0);
+    assert_int_equal(__real_main(array_length(args), args), 3);
 }
 
 static void test_main_2(void **state){
@@ -156,28 +164,82 @@ static void test_main_2(void **state){
 
     (void) state; /* unused */
 
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "10");
-    expect_string(__wrap_printf, temporary_buffer, "3");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
+//    expect_string(__wrap_printf, temporary_buffer, "3");
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), 3);
+}
+
+static void test_main_intersection(void **state){
+    num_of_test = 3;
+    idx = 0;
+    const char *args[] = {
+            "example", "--from=6", "--to=4"
+    };
+
+    (void) state; /* unused */
+
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
 }
 
-//static void test_main_3(void **state){
-//    num_of_test = 3;
-//    idx = 0;
-//    const char *args[] = {
-//            "example", "--to=9", "--from=3"
-//    };
-//
-//    (void) state; /* unused */
-//
-//    expect_string(example_test_fprintf, temporary_buffer_stdout, "1");
-//    expect_string(example_test_fprintf, temporary_buffer_stderr, "10");
-//    expect_string(__wrap_printf, temporary_buffer, "3");
-//
-//    assert_int_equal(example_main(array_length(args), (char **) args), 0);
-//}
+static void test_main_3(void **state){
+    num_of_test = 4;
+    idx = 0;
+    const char *args[] = {
+            "example", "--from=6", "--to=4"
+    };
+
+    (void) state; /* unused */
+
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "8");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+}
+
+static void test_main_4(void **state){
+    num_of_test = 5;
+    idx = 0;
+    const char *args[] = {
+            "example", "--from=", "--to="
+    };
+
+    (void) state; /* unused */
+
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "-2");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "-1");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "0");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "0");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "1");
+    expect_string(__wrap_fprintf, temporary_buffer_stderr, "2");
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+}
+
+static void test_main_duplicate_args(void **state){
+    const char *args[] = {
+            "example", "--from=3", "--from=3"
+    };
+
+    (void) state; /* unused */
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), -3);
+}
+
 
 int __wrap_main()
 {
@@ -186,6 +248,10 @@ int __wrap_main()
             cmocka_unit_test(test_example_main_many_args),
             cmocka_unit_test(test_main_1),
             cmocka_unit_test(test_main_2),
+            cmocka_unit_test(test_main_intersection),
+            cmocka_unit_test(test_main_duplicate_args),
+            cmocka_unit_test(test_main_3),
+            cmocka_unit_test(test_main_4),
     };
 
     //if (my_file != NULL) fclose(my_file);
