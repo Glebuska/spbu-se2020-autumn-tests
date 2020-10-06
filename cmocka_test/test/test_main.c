@@ -215,7 +215,7 @@ static void test_main_4(void **state){
     num_of_test = 5;
     idx = 0;
     const char *args[] = {
-            "example", "--from=", "--to="
+            "example", "--from=", "--to=",
     };
 
     (void) state; /* unused */
@@ -240,6 +240,31 @@ static void test_main_duplicate_args(void **state){
     assert_int_equal(__real_main(array_length(args), (char **) args), -3);
 }
 
+static void test_main_two_invalid(void **state){
+    const char *args[] = {
+            "example", "--anotherOne=2", "--anotherHren",
+    };
+
+    (void) state; /* unused */
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), -4);
+}
+
+static void test_main_5(void **state){
+    num_of_test = 1;
+    idx = 0;
+    const char *args[] = {
+            "example", "--from=3", "m.mk.mk",
+    };
+
+    (void) state; /* unused */
+    
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
+    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
+
+    assert_int_equal(__real_main(array_length(args), (char **)args), 3);
+
+}
 
 int __wrap_main()
 {
@@ -252,6 +277,8 @@ int __wrap_main()
             cmocka_unit_test(test_main_duplicate_args),
             cmocka_unit_test(test_main_3),
             cmocka_unit_test(test_main_4),
+            cmocka_unit_test(test_main_5),
+            cmocka_unit_test(test_main_two_invalid),
     };
 
     //if (my_file != NULL) fclose(my_file);

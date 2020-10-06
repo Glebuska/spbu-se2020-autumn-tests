@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
     if(exist_from == 2 || exist_to == 2)
         return -3;
 
+    if(exist_from == 0 && exist_to == 0)
+        return -4;
     // Reading numbers
     int arr[100];
     int count = 0, arrSize = 0;
