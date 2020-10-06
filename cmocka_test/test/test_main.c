@@ -215,7 +215,7 @@ static void test_main_4(void **state){
     num_of_test = 5;
     idx = 0;
     const char *args[] = {
-            "example", "--from=", "--to="
+            "example", "--from=", "--to=",
     };
 
     (void) state; /* unused */
@@ -240,6 +240,29 @@ static void test_main_duplicate_args(void **state){
     assert_int_equal(__real_main(array_length(args), (char **) args), -3);
 }
 
+static void test_main_4(void **state){
+    num_of_test = 5;
+    idx = 0;
+    const char *args[] = {
+            "example", "--anotherOne=2", "--anotherHren",
+    };
+
+    (void) state; /* unused */
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), -4);
+}
+
+static void test_main_5(void **state){
+    num_of_test = 5;
+    idx = 0;
+    const char *args[] = {
+            "example", "--from=d", "--to=2",
+    };
+
+    (void) state; /* unused */
+
+    assert_int_equal(__real_main(array_length(args), (char **) args), -4);
+}
 
 int __wrap_main()
 {
@@ -252,6 +275,7 @@ int __wrap_main()
             cmocka_unit_test(test_main_duplicate_args),
             cmocka_unit_test(test_main_3),
             cmocka_unit_test(test_main_4),
+            cmocka_unit_test(test_main_5),
     };
 
     //if (my_file != NULL) fclose(my_file);
