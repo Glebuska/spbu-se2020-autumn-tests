@@ -35,6 +35,7 @@ static int test_input3[] = {5, 5, 5};
 static int test_input4[] = {5, 5, 5, 8, 1};
 static int test_input5[] = {-2, -1, 0, 1, 2};
 static int idx;
+static FILE *my_file;
 
 /* A mock fprintf function that checks the value of strings printed to the
  * standard error stream or output stream. */
@@ -84,34 +85,44 @@ int __wrap_printf(const char *format, ...) {
     return return_value;
 }
 
+//int __wrap_scanf(const char *format, ...) {
+//    va_list args;
+//    va_start(args, format);
+//    switch (num_of_test) {
+//        case 1: *va_arg(args, int*) = test_input1[idx++];
+//            if (array_length(test_input1) == idx) *va_arg(args, char*) = '\n';
+//            break;
+//        case 2: *va_arg(args, int*) = test_input2[idx++];
+//            if (array_length(test_input2) == idx) *va_arg(args, char*) = '\n';
+//            break;
+//        case 3: *va_arg(args, int*) = test_input3[idx++];
+//            if (array_length(test_input3) == idx) *va_arg(args, char*) = '\n';
+//            break;
+//        case 4: *va_arg(args, int*) = test_input4[idx++];
+//            if (array_length(test_input4) == idx) *va_arg(args, char*) = '\n';
+//            break;
+//        case 5: *va_arg(args, int*) = test_input5[idx++];
+//            if (array_length(test_input5) == idx) *va_arg(args, char*) = '\n';
+//            break;
+//        default:
+//            va_end(args);
+//	     return -1;
+//    }
+//
+//    va_end(args);
+//    return 1; // TODO: Return proper count
+//}
+
 int __wrap_scanf(const char *format, ...) {
+    int return_value;
     va_list args;
     va_start(args, format);
-    switch (num_of_test) {
-        case 1: *va_arg(args, int*) = test_input1[idx++];
-            if (array_length(test_input1) == idx) *va_arg(args, char*) = '\n';
-            break;
-        case 2: *va_arg(args, int*) = test_input2[idx++];
-            if (array_length(test_input2) == idx) *va_arg(args, char*) = '\n';
-            break;
-        case 3: *va_arg(args, int*) = test_input3[idx++];
-            if (array_length(test_input3) == idx) *va_arg(args, char*) = '\n';
-            break;
-        case 4: *va_arg(args, int*) = test_input4[idx++];
-            if (array_length(test_input4) == idx) *va_arg(args, char*) = '\n';
-            break;
-        case 5: *va_arg(args, int*) = test_input5[idx++];
-            if (array_length(test_input5) == idx) *va_arg(args, char*) = '\n';
-            break;
-        default: 
-            va_end(args);
-	     return -1;
-    }
 
+    return_value = vfscanf(my_file, format, args);
     va_end(args);
-    return 1; // TODO: Return proper count
-}
+    return return_value;
 
+    }
 
 int __wrap___isoc99_scanf(const char *restrict format, ...) {
      void *args = __builtin_apply_args();
@@ -140,8 +151,11 @@ static void test_example_main_many_args(void **state) {
 }
 
 static void test_main_1(void **state) {
-    num_of_test = 1;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test1.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--from=3",
     };
@@ -151,13 +165,16 @@ static void test_main_1(void **state) {
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
     //expect_string(__wrap_printf, temporary_buffer, "3");
-
     assert_int_equal(__real_main(array_length(args), args), 3);
+    if (my_file != NULL) fclose(my_file);
 }
 
 static void test_main_2(void **state){
-    num_of_test = 2;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test2.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--to=9", "--from=3"
     };
@@ -169,11 +186,15 @@ static void test_main_2(void **state){
 //    expect_string(__wrap_printf, temporary_buffer, "3");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 3);
+    if (my_file != NULL) fclose(my_file);
 }
 
 static void test_main_intersection(void **state){
-    num_of_test = 3;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test3.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--from=6", "--to=4"
     };
@@ -188,11 +209,15 @@ static void test_main_intersection(void **state){
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+    if (my_file != NULL) fclose(my_file);
 }
 
 static void test_main_3(void **state){
-    num_of_test = 4;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test4.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--from=6", "--to=4"
     };
@@ -209,11 +234,15 @@ static void test_main_3(void **state){
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+    if (my_file != NULL) fclose(my_file);
 }
 
 static void test_main_4(void **state){
-    num_of_test = 5;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test5.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--from=", "--to=",
     };
@@ -251,19 +280,22 @@ static void test_main_two_invalid(void **state){
 }
 
 static void test_main_5(void **state){
-    num_of_test = 1;
-    idx = 0;
+    my_file = NULL;
+    if ((my_file = fopen("data/test1.txt", "r")) == NULL) {
+        printf("Cannot open file.\n");
+        exit(1);
+    }
     const char *args[] = {
             "example", "--from=3", "m.mk.mk",
     };
 
     (void) state; /* unused */
-    
+    my_file = NULL;
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
-
+    if (my_file != NULL) fclose(my_file);
     assert_int_equal(__real_main(array_length(args), (char **)args), 3);
-
+    if (my_file != NULL) fclose(my_file);
 }
 
 int __wrap_main()
@@ -281,6 +313,6 @@ int __wrap_main()
             cmocka_unit_test(test_main_two_invalid),
     };
 
-    //if (my_file != NULL) fclose(my_file);
+    if (my_file != NULL) fclose(my_file);
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
