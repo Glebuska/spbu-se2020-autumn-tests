@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
     int data[100];
     char space_symbol;
     space_symbol = ' ';
-    while (space_symbol != '\n') {
-        scanf("%d%c", &data[count], &space_symbol);
+    while (scanf("%d", &data[count]) != EOF) {
+//        scanf("%d%c", &data[count], &space_symbol);
         if (exist_from && data[count] <= from || exist_to && data[count] >= to) {
             if (exist_from && data[count] <= from) {
                 fprintf(stdout, "%d ", data[count]);

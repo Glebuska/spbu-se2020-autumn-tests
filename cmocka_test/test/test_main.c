@@ -28,13 +28,6 @@ int __real_main();
 static char temporary_buffer[256];
 static char temporary_buffer_stdout[256];
 static char temporary_buffer_stderr[256];
-static int num_of_test;
-static int test_input1[] = {2, 4, 1, 5, 8, 4};
-static int test_input2[] = {4, 7, 10, 5, 1, 6, 8};
-static int test_input3[] = {5, 5, 5};
-static int test_input4[] = {5, 5, 5, 8, 1};
-static int test_input5[] = {-2, -1, 0, 1, 2};
-static int idx;
 static FILE *my_file;
 
 /* A mock fprintf function that checks the value of strings printed to the
@@ -85,34 +78,6 @@ int __wrap_printf(const char *format, ...) {
     return return_value;
 }
 
-//int __wrap_scanf(const char *format, ...) {
-//    va_list args;
-//    va_start(args, format);
-//    switch (num_of_test) {
-//        case 1: *va_arg(args, int*) = test_input1[idx++];
-//            if (array_length(test_input1) == idx) *va_arg(args, char*) = '\n';
-//            break;
-//        case 2: *va_arg(args, int*) = test_input2[idx++];
-//            if (array_length(test_input2) == idx) *va_arg(args, char*) = '\n';
-//            break;
-//        case 3: *va_arg(args, int*) = test_input3[idx++];
-//            if (array_length(test_input3) == idx) *va_arg(args, char*) = '\n';
-//            break;
-//        case 4: *va_arg(args, int*) = test_input4[idx++];
-//            if (array_length(test_input4) == idx) *va_arg(args, char*) = '\n';
-//            break;
-//        case 5: *va_arg(args, int*) = test_input5[idx++];
-//            if (array_length(test_input5) == idx) *va_arg(args, char*) = '\n';
-//            break;
-//        default:
-//            va_end(args);
-//	     return -1;
-//    }
-//
-//    va_end(args);
-//    return 1; // TODO: Return proper count
-//}
-
 int __wrap_scanf(const char *format, ...) {
     int return_value;
     va_list args;
@@ -152,7 +117,7 @@ static void test_example_main_many_args(void **state) {
 
 static void test_main_1(void **state) {
     my_file = NULL;
-    if ((my_file = fopen("data/test1.txt", "r")) == NULL) {
+    if ((my_file = fopen("test1.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -171,7 +136,7 @@ static void test_main_1(void **state) {
 
 static void test_main_2(void **state){
     my_file = NULL;
-    if ((my_file = fopen("data/test2.txt", "r")) == NULL) {
+    if ((my_file = fopen("test2.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -191,7 +156,7 @@ static void test_main_2(void **state){
 
 static void test_main_intersection(void **state){
     my_file = NULL;
-    if ((my_file = fopen("data/test3.txt", "r")) == NULL) {
+    if ((my_file = fopen("test3.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -214,7 +179,7 @@ static void test_main_intersection(void **state){
 
 static void test_main_3(void **state){
     my_file = NULL;
-    if ((my_file = fopen("data/test4.txt", "r")) == NULL) {
+    if ((my_file = fopen("test4.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -239,7 +204,7 @@ static void test_main_3(void **state){
 
 static void test_main_4(void **state){
     my_file = NULL;
-    if ((my_file = fopen("data/test5.txt", "r")) == NULL) {
+    if ((my_file = fopen("test5.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -281,7 +246,7 @@ static void test_main_two_invalid(void **state){
 
 static void test_main_5(void **state){
     my_file = NULL;
-    if ((my_file = fopen("data/test1.txt", "r")) == NULL) {
+    if ((my_file = fopen("test1.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -290,10 +255,8 @@ static void test_main_5(void **state){
     };
 
     (void) state; /* unused */
-    my_file = NULL;
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
     expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
-    if (my_file != NULL) fclose(my_file);
     assert_int_equal(__real_main(array_length(args), (char **)args), 3);
     if (my_file != NULL) fclose(my_file);
 }
