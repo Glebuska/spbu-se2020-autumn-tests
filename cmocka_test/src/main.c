@@ -4,7 +4,6 @@
 
 #include "sort.h"
 
-
 /**  Bubble sort
 
 int sort(int *arr, int size) {
@@ -95,7 +94,7 @@ int main(int argc, char *argv[]) {
 //        scanf("%d%c", &data[count], &space_symbol);
         if (exist_from && data[count] <= from || exist_to && data[count] >= to) {
             if (exist_from && data[count] <= from) {
-                fprintf(stdout, "%d ", data[count]);
+                fprintf(stdout, "%d", data[count]);
             }
             if (exist_to && data[count] >= to) {
                 fprintf(stderr, "%d ", data[count]);

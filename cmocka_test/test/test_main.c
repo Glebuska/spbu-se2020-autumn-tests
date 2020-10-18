@@ -20,15 +20,12 @@ int __real_main();
 
 #define array_length(x) (sizeof(x) / sizeof((x)[0]))
 
-//extern int example_main(int argc, char *argv[]);
-//
-//int example_test_fprintf(FILE* file, const char *format, ...) CMOCKA_PRINTF_ATTRIBUTE(2, 3);
-//int __wrap_printf(const char *format, ...) CMOCKA_PRINTF_ATTRIBUTE(1, 2);
-
 static char temporary_buffer[256];
-static char temporary_buffer_stdout[256];
+static char temporary_buffer_stdout[256][256];
 static char temporary_buffer_stderr[256];
-static FILE *my_file;
+static int idx;
+static FILE *input_file;
+static FILE *output_file;
 
 /* A mock fprintf function that checks the value of strings printed to the
  * standard error stream or output stream. */
@@ -52,8 +49,8 @@ int __wrap_fprintf(FILE* const file, const char *format, ...) {
     remove_spaces(temporary_buffer);
 
     if (file == stdout) {
-        strcpy(temporary_buffer_stdout, temporary_buffer);
-        check_expected_ptr(temporary_buffer_stdout);
+        strcpy(temporary_buffer_stdout[idx++], temporary_buffer);
+        //check_expected_ptr(temporary_buffer_stdout[idx]);
     }
     else {
         strcpy(temporary_buffer_stderr, temporary_buffer);
@@ -66,14 +63,18 @@ int __wrap_fprintf(FILE* const file, const char *format, ...) {
 
 /* A mock printf function that checks the value of strings printed to the
  * standard output stream. */
-int __wrap_printf(const char *format, ...) {
+int __wrap_printf(const char *restrict format, ...) {
     int return_value;
     va_list args;
     va_start(args, format);
     return_value = vsnprintf(temporary_buffer, sizeof(temporary_buffer),
                              format, args);
+
     remove_spaces(temporary_buffer);
-    check_expected_ptr(temporary_buffer);
+
+    strcpy(temporary_buffer_stdout[idx++], temporary_buffer);
+        //check_expected_ptr(temporary_buffer_stdout[idx]);
+
     va_end(args);
     return return_value;
 }
@@ -83,7 +84,7 @@ int __wrap_scanf(const char *format, ...) {
     va_list args;
     va_start(args, format);
 
-    return_value = vfscanf(my_file, format, args);
+    return_value = vfscanf(input_file, format, args);
     va_end(args);
     return return_value;
 
@@ -116,8 +117,9 @@ static void test_example_main_many_args(void **state) {
 }
 
 static void test_main_1(void **state) {
-    my_file = NULL;
-    if ((my_file = fopen("test1.txt", "r")) == NULL) {
+    input_file = NULL;
+    idx = 0;
+    if ((input_file = fopen("test1.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -126,17 +128,16 @@ static void test_main_1(void **state) {
     };
 
     (void) state; /* unused */
-
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
-    //expect_string(__wrap_printf, temporary_buffer, "3");
     assert_int_equal(__real_main(array_length(args), args), 3);
-    if (my_file != NULL) fclose(my_file);
+    assert_string_equal( temporary_buffer_stdout[0], "2");
+    assert_string_equal( temporary_buffer_stdout[1], "1");
+    if (input_file != NULL) fclose(input_file);
 }
 
 static void test_main_2(void **state){
-    my_file = NULL;
-    if ((my_file = fopen("test2.txt", "r")) == NULL) {
+    input_file = NULL;
+    idx = 0;
+    if ((input_file = fopen("test2.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -147,16 +148,17 @@ static void test_main_2(void **state){
     (void) state; /* unused */
 
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "10");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
 //    expect_string(__wrap_printf, temporary_buffer, "3");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 3);
-    if (my_file != NULL) fclose(my_file);
+    assert_string_equal(temporary_buffer_stdout[0], "1");
+    if (input_file != NULL) fclose(input_file);
 }
 
 static void test_main_intersection(void **state){
-    my_file = NULL;
-    if ((my_file = fopen("test3.txt", "r")) == NULL) {
+    idx = 0;
+    input_file = NULL;
+    if ((input_file = fopen("test3.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -168,18 +170,20 @@ static void test_main_intersection(void **state){
 
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
-    if (my_file != NULL) fclose(my_file);
+
+    assert_string_equal(temporary_buffer_stdout[0], "5");
+    assert_string_equal(temporary_buffer_stdout[1], "5");
+    assert_string_equal(temporary_buffer_stdout[2], "5");
+    if (input_file != NULL) fclose(input_file);
 }
 
 static void test_main_3(void **state){
-    my_file = NULL;
-    if ((my_file = fopen("test4.txt", "r")) == NULL) {
+    idx = 0;
+    input_file = NULL;
+    if ((input_file = fopen("test4.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -191,20 +195,23 @@ static void test_main_3(void **state){
 
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "5");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "5");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "8");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
-    if (my_file != NULL) fclose(my_file);
+
+    assert_string_equal(temporary_buffer_stdout[0], "5");
+    assert_string_equal(temporary_buffer_stdout[1], "5");
+    assert_string_equal(temporary_buffer_stdout[2], "5");
+    assert_string_equal(temporary_buffer_stdout[3], "1");
+
+    if (input_file != NULL) fclose(input_file);
 }
 
 static void test_main_4(void **state){
-    my_file = NULL;
-    if ((my_file = fopen("test5.txt", "r")) == NULL) {
+    idx = 0;
+    input_file = NULL;
+    if ((input_file = fopen("test5.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -214,14 +221,15 @@ static void test_main_4(void **state){
 
     (void) state; /* unused */
 
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "-2");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "-1");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "0");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "0");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "1");
     expect_string(__wrap_fprintf, temporary_buffer_stderr, "2");
 
     assert_int_equal(__real_main(array_length(args), (char **) args), 0);
+
+    assert_string_equal(temporary_buffer_stdout[0], "-2");
+    assert_string_equal(temporary_buffer_stdout[1], "-1");
+    assert_string_equal(temporary_buffer_stdout[2], "0");
 }
 
 static void test_main_duplicate_args(void **state){
@@ -245,8 +253,9 @@ static void test_main_two_invalid(void **state){
 }
 
 static void test_main_5(void **state){
-    my_file = NULL;
-    if ((my_file = fopen("test1.txt", "r")) == NULL) {
+    idx = 0;
+    input_file = NULL;
+    if ((input_file = fopen("test1.txt", "r")) == NULL) {
         printf("Cannot open file.\n");
         exit(1);
     }
@@ -255,10 +264,10 @@ static void test_main_5(void **state){
     };
 
     (void) state; /* unused */
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "2");
-    expect_string(__wrap_fprintf, temporary_buffer_stdout, "1");
     assert_int_equal(__real_main(array_length(args), (char **)args), 3);
-    if (my_file != NULL) fclose(my_file);
+    assert_string_equal(temporary_buffer_stdout[0], "2");
+    assert_string_equal(temporary_buffer_stdout[1], "1");
+    if (input_file != NULL) fclose(input_file);
 }
 
 int __wrap_main()
@@ -276,6 +285,6 @@ int __wrap_main()
             cmocka_unit_test(test_main_two_invalid),
     };
 
-    if (my_file != NULL) fclose(my_file);
+    if (input_file != NULL) fclose(input_file);
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
